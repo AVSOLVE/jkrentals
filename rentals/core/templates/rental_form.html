@@ -17,6 +17,8 @@
       {% endfor %}
     </select>
   </div>
+  {% else %}
+  <input type="hidden" name="client" value="{{ user.pk }}">
   {% endif %}
 
   <div class="form-group">
