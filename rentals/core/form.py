@@ -21,9 +21,9 @@ class RentalForm(ModelForm):
     period_time = forms.ChoiceField(
         choices=Rental.CLASSES_CHOICES, required=True, widget=forms.Select
     )
-    client = forms.ModelChoiceField(queryset=User.objects.all())
+    client = forms.ModelChoiceField(queryset=User.objects.all().order_by('username'))
 
     class Meta:
         model = Rental
-        fields = "__all__"
+        exclude = ['client']
         widgets = {"date": forms.DateInput(attrs={"type": "date"})}

@@ -5,6 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.views import generic
 from django.urls import reverse_lazy
 from django.core.exceptions import ValidationError
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 from core.form import RentalForm
 from .models import Item, Rental
@@ -47,7 +48,7 @@ class RentalListView(generic.ListView):
         return Rental.objects.all().order_by("date", "period", "period_time")
 
 
-class RentalCreateView(generic.CreateView):
+class RentalCreateView(LoginRequiredMixin, generic.CreateView):
     model = Rental
     form_class = RentalForm
     template_name = "rental_form.html"
@@ -64,8 +65,16 @@ class RentalCreateView(generic.CreateView):
         ).exists()
 
         if existing_rental:
-            raise ValidationError("This rental already exists.")
+            form.add_error(None, "This rental already exists.")
+            return self.form_invalid(form)
 
+        rental = form.save(commit=False)
+
+        if self.request.user.is_superuser:
+            rental.client = form.cleaned_data.get("client")
+        else:
+            rental.client = self.request.user
+        rental.save()
         return super().form_valid(form)
 
 
@@ -73,24 +82,38 @@ class RentalDeleteView(generic.DeleteView):
     model = Rental
     template_name = "rental_confirm_delete.html"
     success_url = reverse_lazy("core:rental_list")
-    
+
+
 class RentalEditView(generic.UpdateView):
     model = Rental
     form_class = RentalForm
     template_name = "rental_form.html"
     success_url = reverse_lazy("core:rental_list")
-    
+
     def form_valid(self, form):
         item = form.cleaned_data.get("item")
         date = form.cleaned_data.get("date")
         period = form.cleaned_data.get("period")
         period_time = form.cleaned_data.get("period_time")
-        
-        existing_rental = Rental.objects.filter(
-            item=item, date=date, period=period, period_time=period_time
-        ).exclude(pk=self.object.pk).exists()
-        
+
+        existing_rental = (
+            Rental.objects.filter(
+                item=item, date=date, period=period, period_time=period_time
+            )
+            .exclude(pk=self.object.pk)
+            .exists()
+        )
+
         if existing_rental:
-            raise ValidationError("This rental already exists.")
-        
+            form.add_error(None, "Esse agendamento já existe.")
+            return self.form_invalid(form)
+
+        rental = form.save(commit=False)
+
+        if self.request.user.is_superuser:
+            rental.client = form.cleaned_data.get("client")
+        else:
+            rental.client = self.request.user
+        rental.save()
+
         return super().form_valid(form)

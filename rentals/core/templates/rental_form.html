@@ -4,7 +4,21 @@
   {% csrf_token %}
   {{ form.errors }}
   {{ form.non_field_errors }}
-  {{ rental.date }}
+
+
+  {% if user.is_superuser %}
+  <div class="form-group">
+    <label for="id_client">Professor</label>
+    <select class="form-control" id="id_client" name="client">
+      {% for user in form.fields.client.queryset %}
+      <option value="{{ user.pk }}" {% if user.pk == rental.client.pk %} selected {% endif %}>
+        {{ user.username | upper }}
+      </option>
+      {% endfor %}
+    </select>
+  </div>
+  {% endif %}
+
   <div class="form-group">
     <label for="id_item">Item</label>
     <select class="form-control" id="id_item" name="item">
@@ -22,7 +36,6 @@
     <input type="date" id="id_date" name="date" class="form-control">
     {% endif %}
   </div>
-
 
   <div class="form-group">
     <label for="id_period">Turno</label>
@@ -47,16 +60,9 @@
     <input type="text" id="id_room" name="room" class="form-control" value="{{ rental.room }}">
   </div>
 
-  <div class="form-group">
-    <label for="id_client">Professor</label>
-    <select class="form-control" id="id_client" name="client">
-      {% for user in form.fields.client.queryset %}
-      <option value="{{ user.pk }}" {% if user.pk == rental.client.pk %} selected {% endif %}>{{ user.username }}
-      </option>
-      {% endfor %}
-    </select>
+  <div class="flex gap-2">
+    <a href="{% url 'core:rental_list' %}" class="btn btn-warning w-full my-3">VOLTAR</a>
+    <button type="submit" class="btn btn-success w-full my-3">SALVAR</button>
   </div>
-
-  <button type="submit" class="btn btn-success w-full my-3">SALVAR</button>
 </form>
-{% endblock content %}
+{% endblock %}
