@@ -65,7 +65,7 @@ class RentalCreateView(LoginRequiredMixin, generic.CreateView):
         ).exists()
 
         if existing_rental:
-            form.add_error(None, "This rental already exists.")
+            form.add_error(None, "Agendamento já existe!")
             return self.form_invalid(form)
 
         rental = form.save(commit=False)

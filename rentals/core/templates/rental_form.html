@@ -2,10 +2,14 @@
 {% block content %}
 <form method="post" action=".">
   {% csrf_token %}
-  {{ form.errors }}
-  {{ form.non_field_errors }}
 
-
+  {% if form.non_field_errors %}
+    <div class="alert alert-danger">
+      {% for error in form.non_field_errors %}
+        <p class="text-center">{{ error | upper }}</p>
+      {% endfor %}
+    </div>
+  {% endif %}
   {% if user.is_superuser %}
   <div class="form-group">
     <label for="id_client">Professor</label>
