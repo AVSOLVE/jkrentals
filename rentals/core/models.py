@@ -26,11 +26,11 @@ class Rental(TimeStampedModel):
     ]
 
     CLASSES_CHOICES = [
-        ("1 aula", "1 AULA"),
-        ("2 aula", "2 AULA"),
-        ("3 aula", "3 AULA"),
-        ("4 aula", "4 AULA"),
-        ("5 aula", "5 AULA"),
+        ("1 aula", "1ª AULA"),
+        ("2 aula", "2ª AULA"),
+        ("3 aula", "3ª AULA"),
+        ("4 aula", "4ª AULA"),
+        ("5 aula", "5ª AULA"),
     ]
 
     item = models.ForeignKey(Item, on_delete=models.CASCADE)

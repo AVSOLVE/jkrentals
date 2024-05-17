@@ -4,11 +4,12 @@ from django.shortcuts import get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.views import generic
 from django.urls import reverse_lazy
-from django.core.exceptions import ValidationError
 from django.contrib.auth.mixins import LoginRequiredMixin
-
+from django.utils import timezone
 from core.form import RentalForm
 from .models import Item, Rental
+from django.contrib.auth.models import User
+from django.db.models import Count
 
 
 @login_required
@@ -45,7 +46,24 @@ class RentalListView(generic.ListView):
     context_object_name = "rentals"
 
     def get_queryset(self) -> QuerySet[Any]:
-        return Rental.objects.all().order_by("date", "period", "period_time")
+        today = timezone.now().date()
+        return Rental.objects.filter(date__gte=today).order_by(
+            "date", "period", "period_time"
+        )
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        today = timezone.now().date()
+        context["today"] = today
+        context["tomorrow"] = today + timezone.timedelta(days=1)
+        context["total_rentals"] = Rental.objects.count()
+        context["today_rentals"] = Rental.objects.filter(date=today).count()
+        context["top_3_users"] = (
+            User.objects.annotate(rental_count=Count("rental"))
+            .order_by("-rental_count")[:3]
+        )
+
+        return context
 
 
 class RentalCreateView(LoginRequiredMixin, generic.CreateView):
@@ -60,12 +78,18 @@ class RentalCreateView(LoginRequiredMixin, generic.CreateView):
         period = form.cleaned_data.get("period")
         period_time = form.cleaned_data.get("period_time")
 
-        existing_rental = Rental.objects.filter(
+        conflicting_rental = Rental.objects.filter(
             item=item, date=date, period=period, period_time=period_time
-        ).exists()
+        ).first()
 
-        if existing_rental:
-            form.add_error(None, "Agendamento já existe!")
+        if conflicting_rental:
+            conflict_message = (
+                f"Conflito: "
+                f"{conflicting_rental.item.name} para {conflicting_rental.client.username} "
+                f"no dia {conflicting_rental.date} ,{conflicting_rental.get_period_display()} "
+                f"na {conflicting_rental.get_period_time_display()} na turma {conflicting_rental.room}."
+            )
+            form.add_error(None, conflict_message)
             return self.form_invalid(form)
 
         rental = form.save(commit=False)
@@ -84,7 +108,7 @@ class RentalDeleteView(generic.DeleteView):
     success_url = reverse_lazy("core:rental_list")
 
 
-class RentalEditView(generic.UpdateView):
+class RentalEditView(LoginRequiredMixin, generic.UpdateView):
     model = Rental
     form_class = RentalForm
     template_name = "rental_form.html"

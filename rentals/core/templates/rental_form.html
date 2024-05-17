@@ -4,12 +4,23 @@
   {% csrf_token %}
 
   {% if form.non_field_errors %}
-    <div class="alert alert-danger">
-      {% for error in form.non_field_errors %}
-        <p class="text-center">{{ error | upper }}</p>
-      {% endfor %}
-    </div>
+  <div class="alert alert-danger">
+    {% for error in form.non_field_errors %}
+    <p class="text-center">{{ error | upper }}</p>
+    {% endfor %}
+  </div>
   {% endif %}
+
+  {% if form.errors %}
+  <div class="alert alert-danger">
+    {% for field in form %}
+    {% if field.errors %}
+    <p class="text-center">{{ field.label | upper }}: {{ field.errors | join:", " }}</p>
+    {% endif %}
+    {% endfor %}
+  </div>
+  {% endif %}
+
   {% if user.is_superuser %}
   <div class="form-group">
     <label for="id_client">Professor</label>
@@ -63,7 +74,8 @@
 
   <div class="form-group">
     <label for="id_room">Sala</label>
-    <input type="text" id="id_room" name="room" class="form-control" value="{{ rental.room }}">
+    <input type="text" id="id_room" name="room" class="form-control" placeholder="Digite a sala/turma"
+      value="{{ rental.room }}">
   </div>
 
   <div class="flex gap-2">
