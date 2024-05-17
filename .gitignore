@@ -1,0 +1,4 @@
+.DS_Store
+rm -rf $HOME/.Trash
+rm -rf $HOME/.fseventsd
+db.sqlite3
