@@ -56,12 +56,11 @@ class RentalListView(generic.ListView):
         today = timezone.now().date()
         context["today"] = today
         context["tomorrow"] = today + timezone.timedelta(days=1)
-        context["total_rentals"] = Rental.objects.count()
         context["today_rentals"] = Rental.objects.filter(date=today).count()
-        context["top_3_users"] = (
-            User.objects.annotate(rental_count=Count("rental"))
-            .order_by("-rental_count")[:3]
-        )
+        context["total_rentals"] = Rental.objects.filter(date__gte=today).count()
+        context["top_3_users"] = User.objects.annotate(
+            rental_count=Count("rental")
+        ).order_by("-rental_count")[:3]
 
         return context
 
